@@ -1,90 +1,111 @@
-import { createUniver, defaultTheme, LocaleType, merge } from '@univerjs/presets';
-import { UniverSheetsCorePreset } from '@univerjs/presets/preset-sheets-core';
-import UniverPresetSheetsCoreEnUS from '@univerjs/presets/preset-sheets-core/locales/en-US';
-import UniverPresetSheetsCoreZhCN from '@univerjs/presets/preset-sheets-core/locales/zh-CN';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>UniverJS + Audio Embed</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-import './style.css';
-import '@univerjs/presets/lib/styles/preset-sheets-core.css';
+  <!-- UniverJS core stylesheet -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/@univerjs/presets@0.1.13/lib/styles/preset-sheets-core.css"
+  />
 
-// 1) Initialise UniverJS in the <div id="univer">
-const { univerAPI } = createUniver({
-  locale: LocaleType.EN_US,
-  locales: {
-    enUS: merge({}, UniverPresetSheetsCoreEnUS),
-    zhCN: merge({}, UniverPresetSheetsCoreZhCN),
-  },
-  theme: defaultTheme,
-  presets: [UniverSheetsCorePreset({ container: 'univer' })],
-});
-univerAPI.createUniverSheet({ name: 'Hello Univer' });
-
-// 2) Get sheet reference & hooks
-const sheet = univerAPI.getCurrentWorkbook().getActiveSheet();
-const hooks = univerAPI.getSheetHooks();
-
-// 3) Audio‑in‑cell logic (play/pause icons & click handlers)
-const audioMap = new Map<string, HTMLAudioElement>();
-let selectedCell: { row: number; col: number } | null = null;
-
-// draw ▶️/⏸️
-hooks.onCellRender([{
-  drawWith: (ctx, info) => {
-    const { row, col, primaryWithCoord: { startX, startY } } = info;
-    const val = sheet.getCellValue(row, col);
-    if (typeof val === 'string' && val.startsWith('audio:')) {
-      const key = `${row},${col}`;
-      const playing = audioMap.get(key)?.paused === false;
-      ctx.font = '14px sans-serif';
-      ctx.fillText(playing ? '⏸️' : '▶️', startX + 4, startY + 14);
+  <style>
+    /* reset */
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: sans-serif;
     }
-  },
-}]);
 
-// click→select cell + toggle audio
-hooks.onCellPointerClick(({ row, col }) => {
-  selectedCell = { row, col };
-  const val = sheet.getCellValue(row, col);
-  if (typeof val === 'string' && val.startsWith('audio:')) {
-    const key = `${row},${col}`;
-    let audio = audioMap.get(key);
-    if (!audio) {
-      audio = new Audio(val.slice(6));
-      audioMap.set(key, audio);
-      audio.addEventListener('ended', () => sheet.reRender());
+    /* two‑column layout */
+    #layout {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
     }
-    audio.paused ? audio.play() : audio.pause();
-    sheet.reRender();
-  }
-});
 
-// 4) Wire up your upload button & drop‑zone
-const uploadBtn = document.getElementById('upload-btn') as HTMLButtonElement;
-const fileInput = document.getElementById('audio-input') as HTMLInputElement;
-const dropZone = document.getElementById('drop-zone')!;
+    /* left panel: controls */
+    #controls {
+      width: 260px;
+      min-width: 200px;
+      background: #fafafa;
+      border-right: 1px solid #ddd;
+      padding: 16px;
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
+    #controls h2 {
+      margin-top: 0;
+      font-size: 18px;
+    }
+    #controls button {
+      display: block;
+      width: 100%;
+      margin: 8px 0;
+      padding: 8px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    #controls p {
+      font-size: 13px;
+      margin: 8px 0;
+    }
+    #drop-zone {
+      border: 2px dashed #bbb;
+      border-radius: 4px;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #666;
+      font-size: 13px;
+      margin-top: 12px;
+    }
+    /* hide the native file input */
+    #audio-input {
+      display: none;
+    }
 
-// open file picker
-uploadBtn.addEventListener('click', () => fileInput.click());
+    /* right panel: univer sheet */
+    #sheet-container {
+      flex: 1;
+      position: relative;
+    }
+    /* override preset-sheets-core.css which sets #univer to absolute */
+    #univer {
+      position: static !important;
+      width: 100% !important;
+      height: 100% !important;
+    }
+  </style>
+</head>
 
-// when file picked
-fileInput.addEventListener('change', () => {
-  if (!selectedCell) return;
-  const file = fileInput.files?.[0];
-  if (!file) return;
-  const url = URL.createObjectURL(file);
-  sheet.setCellValue(selectedCell.row, selectedCell.col, `audio:${url}`);
-  sheet.reRender();
-  fileInput.value = '';
-});
+<body>
+  <div id="layout">
+    <!-- ◀ Controls panel -->
+    <div id="controls">
+      <h2>Audio Upload</h2>
+      <p>1. Click any cell in the sheet to select it.</p>
+      <p>2. Then either:</p>
+      <button id="upload-btn">📁 Choose Audio File</button>
+      <p>— or drop your file below —</p>
+      <div id="drop-zone">Drop audio file here</div>
+      <input type="file" id="audio-input" accept="audio/*" />
+      <hr/>
+      <p>After upload you’ll see a ▶️ icon in your selected cell. Click it to play/pause.</p>
+    </div>
 
-// drag & drop
-dropZone.addEventListener('dragover', e => e.preventDefault());
-dropZone.addEventListener('drop', e => {
-  e.preventDefault();
-  if (!selectedCell) return;
-  const file = e.dataTransfer?.files[0];
-  if (file?.type.startsWith('audio/')) {
-    const url = URL.createObjectURL(file);
-    sheet.setCellValue(selectedCell.row, selectedCell.col, `audio:${url}`);
-    sheet.reRender();
-  }
-});
+    <!-- ▶ Sheet panel -->
+    <div id="sheet-container">
+      <div id="univer"></div>
+    </div>
+  </div>
+
+  <!-- Your TS entrypoint -->
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
