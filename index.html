@@ -8,27 +8,23 @@
   <!-- UniverJS core stylesheet -->
   <link
     rel="stylesheet"
-    href="https://unpkg.com/@univerjs/presets@0.1.13/lib/styles/preset-sheets-core.css"
+    href="https://unpkg.com/@univerjs/presets@0.5.5/lib/styles/preset-sheets-core.css"
   />
 
   <style>
-    /* reset */
+    /* Full‑viewport flex container */
     html, body {
       margin: 0;
       padding: 0;
       height: 100%;
       overflow: hidden;
-      font-family: sans-serif;
     }
-
-    /* two‑column layout */
     #layout {
       display: flex;
       height: 100vh;
       width: 100vw;
     }
-
-    /* left panel: controls */
+    /* Left sidebar with your controls */
     #controls {
       width: 260px;
       min-width: 200px;
@@ -37,6 +33,7 @@
       padding: 16px;
       box-sizing: border-box;
       overflow-y: auto;
+      font-family: sans-serif;
     }
     #controls h2 {
       margin-top: 0;
@@ -63,46 +60,38 @@
       justify-content: center;
       color: #666;
       font-size: 13px;
-      margin-top: 12px;
+      margin: 8px 0;
     }
-    /* hide the native file input */
+    /* Hide the native file input */
     #audio-input {
       display: none;
     }
-
-    /* right panel: univer sheet */
-    #sheet-container {
-      flex: 1;
-      position: relative;
-    }
-    /* override preset-sheets-core.css which sets #univer to absolute */
+    /* Right panel: Univer container */
     #univer {
-      position: static !important;
-      width: 100% !important;
-      height: 100% !important;
+      flex: 1;
+      position: relative !important; /* override any preset CSS */
+      height: 100%;
     }
   </style>
 </head>
 
 <body>
   <div id="layout">
-    <!-- ◀ Controls panel -->
+    <!-- ▶ YOUR AUDIO SIDEBAR -->
     <div id="controls">
       <h2>Audio Upload</h2>
-      <p>1. Click any cell in the sheet to select it.</p>
-      <p>2. Then either:</p>
+      <p>1. Click a cell in the sheet to select it.</p>
+      <p>2. Either:</p>
       <button id="upload-btn">📁 Choose Audio File</button>
       <p>— or drop your file below —</p>
       <div id="drop-zone">Drop audio file here</div>
       <input type="file" id="audio-input" accept="audio/*" />
       <hr/>
-      <p>After upload you’ll see a ▶️ icon in your selected cell. Click it to play/pause.</p>
+      <p>▶️ will appear in your selected cell—click to play/pause.</p>
     </div>
 
-    <!-- ▶ Sheet panel -->
-    <div id="sheet-container">
-      <div id="univer"></div>
-    </div>
+    <!-- ▶ UNIVERSHEET PANEL -->
+    <div id="univer"></div>
   </div>
 
   <!-- Your TS entrypoint -->
