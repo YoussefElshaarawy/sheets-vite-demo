@@ -6,7 +6,7 @@ import UniverPresetSheetsCoreZhCN from '@univerjs/presets/preset-sheets-core/loc
 import './style.css';
 import '@univerjs/presets/lib/styles/preset-sheets-core.css';
 
-// 1) Initialise UniverJS into the <div id="sheet-wrapper">
+// 1) Initialise UniverJS into the <div id="univer">
 const { univerAPI } = createUniver({
   locale: LocaleType.EN_US,
   locales: {
@@ -14,22 +14,19 @@ const { univerAPI } = createUniver({
     zhCN: merge({}, UniverPresetSheetsCoreZhCN),
   },
   theme: defaultTheme,
-  presets: [
-    UniverSheetsCorePreset({ container: 'sheet-wrapper' }),
-  ],
+  presets: [UniverSheetsCorePreset({ container: 'univer' })],
 });
 univerAPI.createUniverSheet({ name: 'Hello Univer' });
 
-// 2) Grab the new Facade APIs
-const workbook = univerAPI.getActiveWorkbook();            // ← correct API!
-const sheet = workbook.getActiveSheet();
-const hooks = univerAPI.getSheetHooks();
+// 2) Grab sheet & hooks
+const sheet = univerAPI.getActiveWorkbook()!.getActiveSheet!();
+const hooks = univerAPI.getSheetHooks!();
 
-// 3) Audio‑in‑cell logic state
+// 3) Audio logic
 const audioMap = new Map<string, HTMLAudioElement>();
 let selectedCell: { row: number; col: number } | null = null;
 
-// 4) Draw ▶️/⏸️ icon in any cell whose value starts with "audio:"
+// Draw ▶️/⏸️ icons in any cell whose value starts with "audio:"
 hooks.onCellRender([{
   drawWith: (ctx, info) => {
     const { row, col, primaryWithCoord: { startX, startY } } = info;
@@ -43,12 +40,9 @@ hooks.onCellRender([{
   },
 }]);
 
-// 5) Use the new facade event instead of the old hook
-workbook.addEvent('CellClicked', (evt: any) => {
-  const { row, col } = evt;  // evt.row and evt.col come from the event payload
+// When you click a cell, keep track of it & toggle play/pause
+hooks.onCellPointerClick(({ row, col }) => {
   selectedCell = { row, col };
-
-  // If this cell holds an audio: URL, toggle play/pause
   const val = sheet.getCellValue(row, col);
   if (typeof val === 'string' && val.startsWith('audio:')) {
     const key = `${row},${col}`;
@@ -63,15 +57,15 @@ workbook.addEvent('CellClicked', (evt: any) => {
   }
 });
 
-// 6) Wire up your upload button & drop‑zone (these live in your injected HTML)
+// 4) Wire up your upload button & drop‑zone
 const uploadBtn = document.getElementById('upload-btn') as HTMLButtonElement;
 const fileInput = document.getElementById('audio-input') as HTMLInputElement;
 const dropZone  = document.getElementById('drop-zone')!;
 
-// Open the file picker
+// Open file picker
 uploadBtn.addEventListener('click', () => fileInput.click());
 
-// When a file is selected, insert it into the last‑clicked cell
+// When a file is picked, insert its blob‑URL into the selected cell
 fileInput.addEventListener('change', () => {
   if (!selectedCell) return;
   const file = fileInput.files?.[0];
@@ -82,14 +76,14 @@ fileInput.addEventListener('change', () => {
   fileInput.value = '';
 });
 
-// Drag & drop directly onto your sidebar’s drop‑zone
+// Support drag‑and‑drop
 dropZone.addEventListener('dragover', e => e.preventDefault());
 dropZone.addEventListener('drop', e => {
   e.preventDefault();
   if (!selectedCell) return;
-  const file = e.dataTransfer?.files[0];
-  if (file?.type.startsWith('audio/')) {
-    const url = URL.createObjectURL(file);
+  const f = e.dataTransfer?.files[0];
+  if (f?.type.startsWith('audio/')) {
+    const url = URL.createObjectURL(f);
     sheet.setCellValue(selectedCell.row, selectedCell.col, `audio:${url}`);
     sheet.reRender();
   }
