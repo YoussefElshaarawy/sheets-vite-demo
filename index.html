@@ -1,12 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + TS</title>
-  </head>
-  <body>
-    <div id="univer"></div>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <title>UniverJS Spreadsheet</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- UniverJS styles -->
+  <link rel="stylesheet" href="https://unpkg.com/@univerjs/presets@0.1.13/lib/styles/preset-sheets-core.css" />
+
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+    /* Controls bar at top */
+    #controls {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 40px;
+      background: #f0f0f0;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      box-sizing: border-box;
+      z-index: 1000;
+      border-bottom: 1px solid #ddd;
+    }
+    /* Hide the native file input; we’ll trigger it from the button */
+    #audio-input { display: none; }
+
+    /* Push the sheet down below the controls bar */
+    #univer {
+      position: absolute;
+      top: 40px;  /* same as controls height */
+      left: 0; right: 0; bottom: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1) Controls bar -->
+  <div id="controls">
+    <button id="upload-btn">📁 Upload Audio to Selected Cell</button>
+    <input type="file" id="audio-input" accept="audio/*" />
+  </div>
+
+  <!-- 2) UniverJS container -->
+  <div id="univer"></div>
+
+  <!-- 3) Your TS entrypoint -->
+  <script type="module" src="/src/main.ts"></script>
+</body>
 </html>
