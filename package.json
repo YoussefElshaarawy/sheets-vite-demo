@@ -6,7 +6,8 @@
   "packageManager": "pnpm@9.15.2",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build"
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
     "@univerjs/presets": "^0.5.5"
