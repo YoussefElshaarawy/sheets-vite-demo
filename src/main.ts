@@ -6,7 +6,7 @@ import UniverPresetSheetsCoreZhCN from '@univerjs/presets/preset-sheets-core/loc
 import './style.css';
 import '@univerjs/presets/lib/styles/preset-sheets-core.css';
 
-// 1) Initialise UniverJS in the <div id="univer">
+// 1) Initialise UniverJS in the <div id="sheet-wrapper">
 const { univerAPI } = createUniver({
   locale: LocaleType.EN_US,
   locales: {
@@ -14,7 +14,10 @@ const { univerAPI } = createUniver({
     zhCN: merge({}, UniverPresetSheetsCoreZhCN),
   },
   theme: defaultTheme,
-  presets: [UniverSheetsCorePreset({ container: 'univer' })],
+  presets: [
+    // ← changed container here
+    UniverSheetsCorePreset({ container: 'sheet-wrapper' }),
+  ],
 });
 univerAPI.createUniverSheet({ name: 'Hello Univer' });
 
@@ -81,7 +84,7 @@ dropZone.addEventListener('dragover', e => e.preventDefault());
 dropZone.addEventListener('drop', e => {
   e.preventDefault();
   if (!selectedCell) return;
-  const file = e.dataTransfer?.files[0];
+  const file = (e.dataTransfer?.files ?? [])[0];
   if (file?.type.startsWith('audio/')) {
     const url = URL.createObjectURL(file);
     sheet.setCellValue(selectedCell.row, selectedCell.col, `audio:${url}`);
