@@ -6,31 +6,32 @@ import zhCN from '@univerjs/presets/preset-sheets-core/locales/zh-CN';
 import './style.css';
 import '@univerjs/presets/lib/styles/preset-sheets-core.css';
 
-// Import the Hugging Face Transformers.js pipeline
-import { pipeline } from '@huggingface/transformers';
+// ① Import the Xenova Transformers.js pipeline
+import { pipeline } from '@xenova/transformers';
 
-// Prepare the LLM pipeline once (returns a promise)
+// ② Prepare the LLM pipeline once (quantized for smaller download)
 const llmPipeline = pipeline(
   'text-generation',
-  'HuggingFaceTB/SmolLM2-1.7B-Instruct'
+  'HuggingFaceTB/SmolLM2-1.7B-Instruct',
+  { quantized: true }
 );
 
-// Boot‑strap Univer and mount inside <div id="univer">
+// ③ Boot‑strap Univer and mount inside <div id="univer">
 const { univerAPI } = createUniver({
   locale: LocaleType.EN_US,
   locales: { enUS: merge({}, enUS), zhCN: merge({}, zhCN) },
-  theme  : defaultTheme,
+  theme: defaultTheme,
   presets: [UniverSheetsCorePreset({ container: 'univer' })],
 });
 
-// Create a visible 100×100 sheet
+// ④ Create a visible 100×100 sheet
 ;(univerAPI as any).createUniverSheet({
-  name       : 'Hello Univer',
-  rowCount   : 100,
+  name: 'Hello Univer',
+  rowCount: 100,
   columnCount: 100,
 });
 
-// Register the TAYLORSWIFT() custom formula unchanged
+// ⑤ Register the TAYLORSWIFT() custom formula unchanged
 const LYRICS = [
   "Cause darling I'm a nightmare dressed like a daydream",
   "We're happy, free, confused and lonely at the same time",
@@ -43,14 +44,14 @@ const LYRICS = [
   'TAYLORSWIFT',
   (...args: any[]) => {
     const value = Array.isArray(args[0]) ? args[0][0] : args[0];
-    const idx   = Number(value);
+    const idx = Number(value);
     return idx >= 1 && idx <= LYRICS.length
       ? LYRICS[idx - 1]
       : LYRICS[Math.floor(Math.random() * LYRICS.length)];
   },
   {
     description: 'customFunction.TAYLORSWIFT.description',
-    locales    : {
+    locales: {
       enUS: {
         customFunction: {
           TAYLORSWIFT: {
@@ -63,13 +64,13 @@ const LYRICS = [
   }
 );
 
-// Helper to overwrite the calling cell
+// ⑥ Helper to overwrite any A1‑style cell address
 function writeToCell(a1: string, text: string) {
-  const sheet = univerAPI.getActiveWorkbook().getActiveSheet();
+  const sheet = univerAPI.getActiveWorkbook()!.getActiveSheet()!;
   sheet.getRange(a1).setValue(text);
 }
 
-// Register the AI() custom formula that returns a placeholder immediately
+// ⑦ Register the AI() custom formula that returns a placeholder immediately
 ;(univerAPI.getFormula() as any).registerFunction(
   'AI',
   (prompt: any, optRange?: any) => {
@@ -78,12 +79,13 @@ function writeToCell(a1: string, text: string) {
       ? prompt.flat().join(' ')
       : String(prompt);
     const context = optRange
-      ? (Array.isArray(optRange) ? optRange.flat().join(' ') : String(optRange))
+      ? (Array.isArray(optRange)
+          ? optRange.flat().join(' ')
+          : String(optRange))
       : '';
 
     // Determine which cell called AI()
-    const sheet     = univerAPI.getActiveWorkbook().getActiveSheet();
-    const caller    = sheet.getSelection()!.getAddress();
+    const caller = univerAPI.getActiveWorkbook()!.getActiveSheet()!.getActiveCell().getAddress();
 
     // Immediate placeholder so the formula engine never hangs
     writeToCell(caller, 'Generating…');
@@ -91,7 +93,7 @@ function writeToCell(a1: string, text: string) {
     // Background generation using Transformers.js
     (async () => {
       const generator = await llmPipeline;
-      const result    = await generator(
+      const result = await generator(
         context
           ? `${userPrompt}\n\nContext:\n${context}`
           : userPrompt,
@@ -111,7 +113,7 @@ function writeToCell(a1: string, text: string) {
   },
   {
     description: 'customFunction.AI.description',
-    locales    : {
+    locales: {
       enUS: {
         customFunction: {
           AI: {
