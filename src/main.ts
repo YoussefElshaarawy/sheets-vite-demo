@@ -9,14 +9,22 @@ import '@univerjs/presets/lib/styles/preset-sheets-core.css';
 // ① Import the Xenova Transformers.js pipeline (browser-friendly with types)
 import { pipeline } from '@xenova/transformers';
 
-// ② Initialize the SmolLM2 pipeline once (downloads model weights in-browser)
+// ② Kick off model download *before* formulas register
+//    - This runs in browser on app start, but in Docker/GH we can pre-cache at build time
 const llmPipeline = pipeline(
   'text-generation',
   'HuggingFaceTB/SmolLM2-1.7B-Instruct',
   { quantized: true }
 );
 
-// ③ Boot‑strap Univer and mount inside <div id="univer">
+// Warm up the model on load so the sheet engine doesn’t block
+;(async () => {
+  console.log('Loading SmolLM2…');
+  await llmPipeline;
+  console.log('SmolLM2 ready.');
+})();
+
+// ③ Boot‑strap Univer and mount inside <div id="univer"> 
 const { univerAPI } = createUniver({
   locale: LocaleType.EN_US,
   locales: { enUS: merge({}, enUS), zhCN: merge({}, zhCN) },
@@ -27,7 +35,7 @@ const { univerAPI } = createUniver({
 // ④ Create a visible 100×100 sheet
 ;(univerAPI as any).createUniverSheet({ name: 'Hello Univer', rowCount: 100, columnCount: 100 });
 
-// ⑤ Register the TAYLORSWIFT() custom formula unchanged
+// ⑤ Register the TAYLORSWIFT() custom formula
 const LYRICS = [
   "Cause darling I'm a nightmare dressed like a daydream",
   "We're happy, free, confused and lonely at the same time",
@@ -51,24 +59,27 @@ const LYRICS = [
 // ⑥ Register the AI() custom formula as an async call
 ;(univerAPI.getFormula() as any).registerAsyncFunction(
   'AI',
-  async (prompt: any, optRange?: any) => {
+  async (prompt: any, contextRange?: any) => {
+    // Ensure model is fully loaded before invoking
+    await llmPipeline;
+
     // Flatten inputs like TAYLORSWIFT()
     const userPrompt = Array.isArray(prompt) ? prompt.flat().join(' ') : String(prompt);
-    const context = optRange ? (Array.isArray(optRange) ? optRange.flat().join(' ') : String(optRange)) : '';
+    const context = contextRange ? (Array.isArray(contextRange) ? contextRange.flat().join(' ') : String(contextRange)) : '';
 
-    // Prepare the messages for the model
+    // Build the message payload
     const messages = [
       { role: 'system', content: 'You are a helpful assistant.' },
       { role: 'user', content: context ? `${userPrompt}\n\nContext:\n${context}` : userPrompt },
     ];
 
-    // Await the pipeline (loads if necessary) and generate
+    // Run the pipeline and await output
     const generator = await llmPipeline;
-    const result    = await generator(messages, { max_new_tokens: 128, temperature: 0.2, top_p: 0.9 });
+    const output    = await generator(messages, { max_new_tokens: 128, temperature: 0.2, top_p: 0.9 });
 
-    // Extract generated text from the result
-    const answer = Array.isArray(result) ? (result[0] as any).generated_text : String(result);
-    return answer.trim();
+    // Extract text
+    const text = Array.isArray(output) ? (output[0] as any).generated_text : String(output);
+    return text.trim();
   },
   { description: 'customFunction.AI.description' }
 );
