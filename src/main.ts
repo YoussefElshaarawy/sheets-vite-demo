@@ -92,9 +92,7 @@ ${context}`
 
     // Wait for model and invoke stream
     const generator = await llmPipeline;
-    const result    = await generator(messages, {
-      stream: false,
-      max_new_tokens: 128,
+    const result    = await generator(messages, {      max_new_tokens: 128,
       temperature:    0.2,
       top_p:          0.9,
     });
