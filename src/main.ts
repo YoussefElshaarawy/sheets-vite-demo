@@ -1,9 +1,4 @@
-import {
-  createUniver,
-  defaultTheme,
-  LocaleType,
-  merge,
-} from '@univerjs/presets';
+import { createUniver, defaultTheme, LocaleType, merge } from '@univerjs/presets';
 import { UniverSheetsCorePreset } from '@univerjs/presets/preset-sheets-core';
 import enUS from '@univerjs/presets/preset-sheets-core/locales/en-US';
 import zhCN from '@univerjs/presets/preset-sheets-core/locales/zh-CN';
@@ -11,32 +6,31 @@ import zhCN from '@univerjs/presets/preset-sheets-core/locales/zh-CN';
 import './style.css';
 import '@univerjs/presets/lib/styles/preset-sheets-core.css';
 
-// ① Import the LLM pipeline helper and UUID generator
-import { llmPipeline } from './llm';
-import { v4 as uuid } from 'uuid';
+// Import the Hugging Face Transformers.js pipeline
+import { pipeline } from '@huggingface/transformers';
 
-/* ------------------------------------------------------------------ */
-/* 1.  Boot‑strap Univer and mount inside <div id="univer">            */
-/* ------------------------------------------------------------------ */
+// Prepare the LLM pipeline once (returns a promise)
+const llmPipeline = pipeline(
+  'text-generation',
+  'HuggingFaceTB/SmolLM2-1.7B-Instruct'
+);
+
+// Boot‑strap Univer and mount inside <div id="univer">
 const { univerAPI } = createUniver({
   locale: LocaleType.EN_US,
   locales: { enUS: merge({}, enUS), zhCN: merge({}, zhCN) },
-  theme: defaultTheme,
+  theme  : defaultTheme,
   presets: [UniverSheetsCorePreset({ container: 'univer' })],
 });
 
-/* ------------------------------------------------------------------ */
-/* 2.  Create a visible 100 × 100 sheet (cast → any silences TS)        */
-/* ------------------------------------------------------------------ */
+// Create a visible 100×100 sheet
 ;(univerAPI as any).createUniverSheet({
-  name: 'Hello Univer',
-  rowCount: 100,
+  name       : 'Hello Univer',
+  rowCount   : 100,
   columnCount: 100,
 });
 
-/* ------------------------------------------------------------------ */
-/* 3.  Register the TAYLORSWIFT() custom formula                      */
-/* ------------------------------------------------------------------ */
+// Register the TAYLORSWIFT() custom formula unchanged
 const LYRICS = [
   "Cause darling I'm a nightmare dressed like a daydream",
   "We're happy, free, confused and lonely at the same time",
@@ -56,7 +50,7 @@ const LYRICS = [
   },
   {
     description: 'customFunction.TAYLORSWIFT.description',
-    locales: {
+    locales    : {
       enUS: {
         customFunction: {
           TAYLORSWIFT: {
@@ -69,23 +63,17 @@ const LYRICS = [
   }
 );
 
-/* ------------------------------------------------------------------ */
-/* 4.  Helper to write back into the calling cell                     */
-/* ------------------------------------------------------------------ */
+// Helper to overwrite the calling cell
 function writeToCell(a1: string, text: string) {
-  univerAPI.getActiveWorkbook()
-           .getActiveSheet()
-           .getRange(a1)
-           .setValue(text);
+  const sheet = univerAPI.getActiveWorkbook().getActiveSheet();
+  sheet.getRange(a1).setValue(text);
 }
 
-/* ------------------------------------------------------------------ */
-/* 5.  Register the AI() custom formula                              */
-/* ------------------------------------------------------------------ */
+// Register the AI() custom formula that returns a placeholder immediately
 ;(univerAPI.getFormula() as any).registerFunction(
   'AI',
   (prompt: any, optRange?: any) => {
-    // 5·1 Flatten inputs like TAYLORSWIFT()
+    // Flatten inputs like TAYLORSWIFT()
     const userPrompt = Array.isArray(prompt)
       ? prompt.flat().join(' ')
       : String(prompt);
@@ -93,53 +81,42 @@ function writeToCell(a1: string, text: string) {
       ? (Array.isArray(optRange) ? optRange.flat().join(' ') : String(optRange))
       : '';
 
-    // 5·2 Find the address of the cell that called AI()
-    const caller = univerAPI.getActiveWorkbook()
-                  .getActiveSheet()
-                  .getSelections()[0]
-                  .getAddress();
+    // Determine which cell called AI()
+    const sheet     = univerAPI.getActiveWorkbook().getActiveSheet();
+    const caller    = sheet.getSelection()!.getAddress();
 
-    // 5·3 Give immediate feedback
+    // Immediate placeholder so the formula engine never hangs
     writeToCell(caller, 'Generating…');
 
-    // 5·4 Background streaming from SmolLM2
+    // Background generation using Transformers.js
     (async () => {
-      // a) Ensure pipeline is loaded
       const generator = await llmPipeline;
-      // b) Call with streaming enabled
-      const stream = await generator(
-        [
-          { role: 'system', content: 'You are a helpful assistant.' },
-          {
-            role: 'user',
-            content: context
-              ? `${userPrompt}\n\nContext:\n${context}`
-              : userPrompt,
-          },
-        ],
-        { stream: true, max_new_tokens: 128, temperature: 0.2, top_p: 0.9, details: true }
+      const result    = await generator(
+        context
+          ? `${userPrompt}\n\nContext:\n${context}`
+          : userPrompt,
+        { max_new_tokens: 128, temperature: 0.2, top_p: 0.9 }
       );
 
-      // c) Accumulate tokens
-      let output = '';
-      for await (const chunk of stream) {
-        output += chunk.generated_text ?? chunk.token?.text ?? '';
-      }
+      // Extract text from the pipeline output
+      const answer = Array.isArray(result)
+        ? (result[0] as any).generated_text || String(result[0])
+        : String(result);
 
-      // d) Overwrite cell with final answer
-      writeToCell(caller, output.trim());
+      writeToCell(caller, answer.trim());
     })();
 
-    // 5·5 Return the immediate placeholder
+    // Return immediate placeholder
     return 'Generating…';
   },
   {
     description: 'customFunction.AI.description',
-    locales: {
+    locales    : {
       enUS: {
         customFunction: {
           AI: {
-            description: 'Runs SmolLM 2 locally (WebGPU/WASM). =AI("Prompt" [, A1:B5])',
+            description:
+              'Runs SmolLM 2 locally via Transformers.js. =AI("Prompt" [, A1:B5])',
           },
         },
       },
