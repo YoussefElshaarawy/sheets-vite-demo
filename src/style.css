@@ -6,6 +6,10 @@ body {
 }
 
 #univer {
+  /* give the room both height *and* width */
   height: 100%;
-  overflow: hidden;
+  width: 100%;        /* ← add this line */
+  
+  /* allow scrolling so you can move around the grid */
+  overflow: auto;     /* ← change hidden → auto */
 }
