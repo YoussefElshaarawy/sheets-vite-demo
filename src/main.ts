@@ -1,22 +1,30 @@
 import { createUniver, defaultTheme, LocaleType } from '@univerjs/presets';
 import { UniverSheetsCorePreset }               from '@univerjs/presets/preset-sheets-core';
 import enUS                                     from '@univerjs/presets/preset-sheets-core/locales/en-US';
-
 import '@univerjs/presets/lib/styles/preset-sheets-core.css';
 
-/* ------------------------------------------------------------------ */
-/* 1.  Boot‑strap Univer (no formula field needed)                     */
-/* ------------------------------------------------------------------ */
+/* ------------------------------------------------------------- */
+/* 1.  Boot‑strap Univer and mount in <div id="univer">           */
+/* ------------------------------------------------------------- */
 const { univerAPI } = createUniver({
   locale: LocaleType.EN_US,
   locales: { enUS },
   theme: defaultTheme,
   presets: [UniverSheetsCorePreset({ container: 'univer' })],
 });
-univerAPI.createWorkbook({});
-/* ------------------------------------------------------------------ */
-/* 2.  Register the TAYLORSWIFT() custom function at runtime          */
-/* ------------------------------------------------------------------ */
+
+/* ------------------------------------------------------------- */
+/* 2.  Create a 100 × 100 sheet so cells are visible             */
+/* ------------------------------------------------------------- */
+univerAPI.createUniverSheet({
+  name: 'Sheet1',
+  rowCount: 100,
+  columnCount: 100,
+});
+
+/* ------------------------------------------------------------- */
+/* 3.  Register the TAYLORSWIFT() custom formula                 */
+/* ------------------------------------------------------------- */
 const formulaEngine = univerAPI.getFormula();
 
 const LYRICS = [
@@ -27,11 +35,10 @@ const LYRICS = [
   "Loving him was red—burning red",
 ];
 
-// executor typed loosely to satisfy the current .d.ts
 formulaEngine.registerFunction(
   'TAYLORSWIFT',
   (...args: any[]) => {
-    const raw = Array.isArray(args[0]) ? args[0][0] : args[0];   // core‑1: value
+    const raw = Array.isArray(args[0]) ? args[0][0] : args[0];
     const idx = Number(raw);
     return idx >= 1 && idx <= LYRICS.length
       ? LYRICS[idx - 1]
@@ -43,8 +50,7 @@ formulaEngine.registerFunction(
       enUS: {
         customFunction: {
           TAYLORSWIFT: {
-            description:
-              'Returns a Taylor Swift lyric. Pass 1‑5 to pick a specific line.',
+            description: 'Returns a Taylor Swift lyric (1‑5 chooses specific line).',
           },
         },
       },
