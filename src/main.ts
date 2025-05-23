@@ -20,26 +20,3 @@ const LYRICS = [
   "I remember it all too well",
   "Loving him was red—burning red",
 ];
-
-univerAPI.getFormula().registerFunction(
-  'TAYLORSWIFT',
-  (...args: any[]) => {
-    const raw = Array.isArray(args[0]) ? args[0][0] : args[0];
-    const idx = Number(raw);
-    return idx >= 1 && idx <= LYRICS.length
-      ? LYRICS[idx - 1]
-      : LYRICS[Math.floor(Math.random() * LYRICS.length)];
-  },
-  {
-    description: 'customFunction.TAYLORSWIFT.description',
-    locales: {
-      enUS: {
-        customFunction: {
-          TAYLORSWIFT: {
-            description: 'Returns a Taylor Swift lyric (1‑5 chooses a specific line).',
-          },
-        },
-      },
-    },
-  }
-);
