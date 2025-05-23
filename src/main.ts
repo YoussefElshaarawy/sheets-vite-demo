@@ -8,7 +8,7 @@ import '@univerjs/presets/lib/styles/preset-sheets-core.css';
 
 // ① Import the Xenova Transformers.js pipeline
 // ① Import the Hugging Face Transformers JS pipeline
-import { pipeline } from '@huggingface/transformers';
+import { pipeline } from '@xenova/transformers';
 
 // ② Prepare the LLM pipeline once (returns a Promise of generator)
 const llmPipeline = pipeline(
