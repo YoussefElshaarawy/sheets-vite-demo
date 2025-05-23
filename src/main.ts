@@ -15,16 +15,15 @@ const { univerAPI } = createUniver({
   },
   theme: defaultTheme,
   presets: [
-    UniverSheetsCorePreset({
-      container: 'univer',
-      /**  🔄 0.5.5 expects the *string list* under `function`
-       *      and the *executor array* under `description`   */
-      formula: {
-        function: FUNCTION_LIST_USER,  // string[]
-        description: functionUser,     // executor[]
-      },
-    }),
-  ],
-});
+  UniverSheetsCorePreset({
+    container: 'univer',
+    formula: {
+      // 1) executor objects
+      function: functionUser as any,       // cast silences TS mismatch
+      // 2) IDs for Insert‑Function dialog
+      description: FUNCTION_LIST_USER,     // string[]
+    },
+  }),
+],
 
 univerAPI.createWorkbook({});
