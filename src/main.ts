@@ -10,11 +10,6 @@ const { univerAPI } = createUniver({
   theme: defaultTheme,
   presets: [UniverSheetsCorePreset({ container: 'univer' })],
 });
-univerAPI.createUniverSheet({
-  name: 'Hello Univer',
-  rowCount: 100,      // how many rows (desks front‑to‑back)
-  columnCount: 100,   // how many columns (desks left‑to‑right)
-});
 
 /* 2. Register the TAYLORSWIFT() custom formula */
 const LYRICS = [
