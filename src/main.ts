@@ -7,13 +7,13 @@ import './style.css';
 import '@univerjs/presets/lib/styles/preset-sheets-core.css';
 
 // ① Import the Xenova Transformers.js pipeline
-import { pipeline } from '@xenova/transformers';
+// ① Import the Hugging Face Transformers JS pipeline
+import { pipeline } from '@huggingface/transformers';
 
-// ② Prepare the LLM pipeline once (quantized for smaller download)
+// ② Prepare the LLM pipeline once (returns a Promise of generator)
 const llmPipeline = pipeline(
   'text-generation',
-  'HuggingFaceTB/SmolLM2-1.7B-Instruct',
-  { quantized: true }
+  'HuggingFaceTB/SmolLM2-1.7B-Instruct'
 );
 
 // ③ Boot‑strap Univer and mount inside <div id="univer">
