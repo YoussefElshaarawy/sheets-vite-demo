@@ -18,11 +18,9 @@ const { univerAPI } = createUniver({
   presets: [
     UniverSheetsCorePreset({
       container: 'univer',
-
-      // ------------- custom formula catalogue ----------------
       formula: {
-        function: functionUser as any,      // executor array; cast silences bad .d.ts
-        description: FUNCTION_LIST_USER,    // string IDs for Insert‑Function dialog
+        function: functionUser as any,      // executor array
+        description: FUNCTION_LIST_USER,    // dialog list
       },
     }),
   ],
