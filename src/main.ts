@@ -11,6 +11,8 @@ const { univerAPI } = createUniver({
   presets: [UniverSheetsCorePreset({ container: 'univer' })],
 });
 
+univerAPI.createUniverSheet({ name: 'Hello Univer' });
+
 /* 2. Register the TAYLORSWIFT() custom formula */
 const LYRICS = [
   "Cause darling I'm a nightmare dressed like a daydream",
