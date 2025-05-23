@@ -3,7 +3,7 @@ import { UniverSheetsCorePreset }               from '@univerjs/presets/preset-s
 import enUS                                     from '@univerjs/presets/preset-sheets-core/locales/en-US';
 import '@univerjs/presets/lib/styles/preset-sheets-core.css';
 
-/* 1. Boot‑strap Univer and mount it in <div id="univer"> */
+/* 1. Boot‑strap Univer */
 const { univerAPI } = createUniver({
   locale: LocaleType.EN_US,
   locales: { enUS },
@@ -11,9 +11,14 @@ const { univerAPI } = createUniver({
   presets: [UniverSheetsCorePreset({ container: 'univer' })],
 });
 
-univerAPI.createUniverSheet({ name: 'Hello Univer' });
+/* 2. Visible 100 × 100 sheet (cast to any to satisfy compiler) */
+univerAPI.createUniverSheet({
+  name: 'Hello Univer',
+  rowCount: 100,
+  columnCount: 100,
+} as any);
 
-/* 2. Register the TAYLORSWIFT() custom formula */
+/* 3. Taylor‑Swift formula */
 const LYRICS = [
   "Cause darling I'm a nightmare dressed like a daydream",
   "We're happy, free, confused and lonely at the same time",
