@@ -64,52 +64,47 @@ const LYRICS = [
   }
 );
 
-// ⑥ Helper to overwrite any A1‑style cell address
-function writeToCell(a1: string, text: string) {
-  const sheet = univerAPI.getActiveWorkbook()!.getActiveSheet()!;
-  sheet.getRange(a1).setValue(text);
-}
-
-// ⑦ Register the AI() custom formula that returns a placeholder immediately
-;(univerAPI.getFormula() as any).registerFunction(
+// ⑥ Register AI() as an async formula, letting Univer handle loading state
+;(univerAPI.getFormula() as any).registerAsyncFunction(
   'AI',
-  (prompt: any, optRange?: any) => {
+  async (prompt: any, optRange?: any) => {
     // Flatten inputs like TAYLORSWIFT()
     const userPrompt = Array.isArray(prompt)
       ? prompt.flat().join(' ')
       : String(prompt);
     const context = optRange
-      ? (Array.isArray(optRange)
-          ? optRange.flat().join(' ')
-          : String(optRange))
+      ? (Array.isArray(optRange) ? optRange.flat().join(' ') : String(optRange))
       : '';
 
-    // Determine which cell called AI()
-    const caller = univerAPI.getActiveWorkbook()!.getActiveSheet()!.getActiveCell().getAddress();
+    // Prepare message sequence
+    const messages = [
+      { role: 'system', content: 'You are a helpful assistant.' },
+      {
+        role:    'user',
+        content: context
+          ? `${userPrompt}
 
-    // Immediate placeholder so the formula engine never hangs
-    writeToCell(caller, 'Generating…');
-
-    // Background generation using Transformers.js
-    (async () => {
-      const generator = await llmPipeline;
-      const result = await generator(
-        context
-          ? `${userPrompt}\n\nContext:\n${context}`
+Context:
+${context}`
           : userPrompt,
-        { max_new_tokens: 128, temperature: 0.2, top_p: 0.9 }
-      );
+      },
+    ];
 
-      // Extract text from the pipeline output
-      const answer = Array.isArray(result)
-        ? (result[0] as any).generated_text || String(result[0])
-        : String(result);
+    // Wait for model and invoke stream
+    const generator = await llmPipeline;
+    const result    = await generator(messages, {
+      stream: false,
+      max_new_tokens: 128,
+      temperature:    0.2,
+      top_p:          0.9,
+    });
 
-      writeToCell(caller, answer.trim());
-    })();
+    // Extract text
+    const answer = Array.isArray(result)
+      ? (result[0] as any).generated_text || String(result[0])
+      : String(result);
 
-    // Return immediate placeholder
-    return 'Generating…';
+    return answer.trim();
   },
   {
     description: 'customFunction.AI.description',
@@ -117,8 +112,7 @@ function writeToCell(a1: string, text: string) {
       enUS: {
         customFunction: {
           AI: {
-            description:
-              'Runs SmolLM 2 locally via Transformers.js. =AI("Prompt" [, A1:B5])',
+            description: 'Runs SmolLM2 locally. =AI("Prompt" [, A1:B5])',
           },
         },
       },
