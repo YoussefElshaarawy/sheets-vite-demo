@@ -10,10 +10,13 @@ import '@univerjs/presets/lib/styles/preset-sheets-core.css';
 import { pipeline } from '@xenova/transformers';
 
 // ② Prepare the LLM pipeline configuration (local ONNX files)
+// ② Prepare the LLM pipeline configuration using local ONNX paths
+//    The second argument must be a string path to the ONNX model file
 const llmPipeline = pipeline(
   'text-generation',
-  { model: '/onnx/model_q4f16.onnx', tokenizer: '/onnx/tokenizer.json' },
-  { backend: 'onnx' }
+  '/onnx/model_q4f16.onnx',             // ONNX model file URL
+  { tokenizer: '/onnx/tokenizer.json',  // Optional tokenizer file URL
+    backend: 'onnx' }
 );
 
 // ③ Boot‑strap Univer and mount inside <div id="univer">
