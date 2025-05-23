@@ -3,9 +3,7 @@ import { UniverSheetsCorePreset }               from '@univerjs/presets/preset-s
 import enUS                                     from '@univerjs/presets/preset-sheets-core/locales/en-US';
 import '@univerjs/presets/lib/styles/preset-sheets-core.css';
 
-/* ------------------------------------------------------------- */
-/* 1.  Boot‑strap Univer and mount in <div id="univer">           */
-/* ------------------------------------------------------------- */
+/* 1. Boot‑strap Univer and mount it in <div id="univer"> */
 const { univerAPI } = createUniver({
   locale: LocaleType.EN_US,
   locales: { enUS },
@@ -13,20 +11,14 @@ const { univerAPI } = createUniver({
   presets: [UniverSheetsCorePreset({ container: 'univer' })],
 });
 
-/* ------------------------------------------------------------- */
-/* 2.  Create a 100 × 100 sheet so cells are visible             */
-/* ------------------------------------------------------------- */
-univerAPI.createUniverSheet({
+/* 2. Create a visible 100 × 100 sheet (cast to any to satisfy TS) */
+(univerAPI as any).createUniverSheet({
   name: 'Sheet1',
   rowCount: 100,
   columnCount: 100,
 });
 
-/* ------------------------------------------------------------- */
-/* 3.  Register the TAYLORSWIFT() custom formula                 */
-/* ------------------------------------------------------------- */
-const formulaEngine = univerAPI.getFormula();
-
+/* 3. Register the TAYLORSWIFT() custom formula */
 const LYRICS = [
   "Cause darling I'm a nightmare dressed like a daydream",
   "We're happy, free, confused and lonely at the same time",
@@ -35,7 +27,7 @@ const LYRICS = [
   "Loving him was red—burning red",
 ];
 
-formulaEngine.registerFunction(
+univerAPI.getFormula().registerFunction(
   'TAYLORSWIFT',
   (...args: any[]) => {
     const raw = Array.isArray(args[0]) ? args[0][0] : args[0];
@@ -50,7 +42,7 @@ formulaEngine.registerFunction(
       enUS: {
         customFunction: {
           TAYLORSWIFT: {
-            description: 'Returns a Taylor Swift lyric (1‑5 chooses specific line).',
+            description: 'Returns a Taylor Swift lyric (1‑5 chooses a specific line).',
           },
         },
       },
