@@ -15,6 +15,12 @@ const { univerAPI } = createUniver({
 });
 univerAPI.createWorkbook({});
 
+univerAPI.createUniverSheet({
+  name: 'Sheet1',      // visible tab name
+  rowCount: 100,       // number of rows
+  columnCount: 100,    // number of columns
+});
+
 /* ------------------------------------------------------------------ */
 /* 2.  Register the TAYLORSWIFT() custom function at runtime          */
 /* ------------------------------------------------------------------ */
