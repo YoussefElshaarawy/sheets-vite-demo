@@ -11,14 +11,7 @@ const { univerAPI } = createUniver({
   presets: [UniverSheetsCorePreset({ container: 'univer' })],
 });
 
-/* 2. Create a visible 100 × 100 sheet (cast to any to satisfy TS) */
-(univerAPI as any).createUniverSheet({
-  name: 'Sheet1',
-  rowCount: 100,
-  columnCount: 100,
-});
-
-/* 3. Register the TAYLORSWIFT() custom formula */
+/* 2. Register the TAYLORSWIFT() custom formula */
 const LYRICS = [
   "Cause darling I'm a nightmare dressed like a daydream",
   "We're happy, free, confused and lonely at the same time",
@@ -49,3 +42,4 @@ univerAPI.getFormula().registerFunction(
     },
   }
 );
+univerAPI.createUniverSheet({ name: 'Hello Univer' });
