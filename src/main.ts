@@ -6,18 +6,14 @@ import zhCN from '@univerjs/presets/preset-sheets-core/locales/zh-CN';
 import './style.css';
 import '@univerjs/presets/lib/styles/preset-sheets-core.css';
 
-// Provide ambient declaration so TS knows this module exists
-declare module '@huggingface/transformers';
-
-// ① Import the Hugging Face JS pipeline
-// @ts-ignore: no type declarations available
-import { pipeline } from '@huggingface/transformers';
-import { pipeline } from '@huggingface/transformers';
+// ① Import the Xenova Transformers.js pipeline (browser-friendly with types)
+import { pipeline } from '@xenova/transformers';
 
 // ② Initialize the SmolLM2 pipeline once (downloads model weights in-browser)
 const llmPipeline = pipeline(
   'text-generation',
-  'HuggingFaceTB/SmolLM2-1.7B-Instruct'
+  'HuggingFaceTB/SmolLM2-1.7B-Instruct',
+  { quantized: true }
 );
 
 // ③ Boot‑strap Univer and mount inside <div id="univer">
@@ -57,34 +53,21 @@ const LYRICS = [
   'AI',
   async (prompt: any, optRange?: any) => {
     // Flatten inputs like TAYLORSWIFT()
-    const userPrompt = Array.isArray(prompt)
-      ? prompt.flat().join(' ')
-      : String(prompt);
-    const context = optRange
-      ? (Array.isArray(optRange) ? optRange.flat().join(' ') : String(optRange))
-      : '';
+    const userPrompt = Array.isArray(prompt) ? prompt.flat().join(' ') : String(prompt);
+    const context = optRange ? (Array.isArray(optRange) ? optRange.flat().join(' ') : String(optRange)) : '';
 
     // Prepare the messages for the model
     const messages = [
       { role: 'system', content: 'You are a helpful assistant.' },
-      { role: 'user', content: context
-          ? `${userPrompt}\n\nContext:\n${context}`
-          : userPrompt },
+      { role: 'user', content: context ? `${userPrompt}\n\nContext:\n${context}` : userPrompt },
     ];
 
     // Await the pipeline (loads if necessary) and generate
     const generator = await llmPipeline;
-    const result    = await generator(messages, {
-      max_new_tokens: 128,
-      temperature:    0.2,
-      top_p:          0.9,
-    });
+    const result    = await generator(messages, { max_new_tokens: 128, temperature: 0.2, top_p: 0.9 });
 
     // Extract generated text from the result
-    const answer = Array.isArray(result)
-      ? (result[0] as any).generated_text
-      : String(result);
-
+    const answer = Array.isArray(result) ? (result[0] as any).generated_text : String(result);
     return answer.trim();
   },
   { description: 'customFunction.AI.description' }
