@@ -6,7 +6,12 @@ import zhCN from '@univerjs/presets/preset-sheets-core/locales/zh-CN';
 import './style.css';
 import '@univerjs/presets/lib/styles/preset-sheets-core.css';
 
+// Provide ambient declaration so TS knows this module exists
+declare module '@huggingface/transformers';
+
 // ① Import the Hugging Face JS pipeline
+// @ts-ignore: no type declarations available
+import { pipeline } from '@huggingface/transformers';
 import { pipeline } from '@huggingface/transformers';
 
 // ② Initialize the SmolLM2 pipeline once (downloads model weights in-browser)
