@@ -19,8 +19,8 @@ const { univerAPI } = createUniver({
     UniverSheetsCorePreset({
       container: 'univer',
       formula: {
-        function: functionUser as any,      // executor array
-        description: FUNCTION_LIST_USER,    // dialog list
+        function: functionUser as any,     // executor objects
+        description: FUNCTION_LIST_USER,   // string IDs
       },
     }),
   ],
