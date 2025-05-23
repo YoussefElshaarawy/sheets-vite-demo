@@ -2,7 +2,7 @@
   "name": "univer-sheets-vite",
   "version": "0.0.0",
   "private": true,
-  "type": "module",       // <-- allow ESM imports in Node
+  "type": "module",
   "scripts": {
     "build": "tsc && vite build",
     "dev":   "vite",
