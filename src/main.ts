@@ -18,10 +18,7 @@ const { univerAPI } = createUniver({
   locale: LocaleType.EN_US,
   locales: { enUS: merge({}, enUS), zhCN: merge({}, zhCN) },
   theme: defaultTheme,
-  presets: [
-    // ← Note container: 'sheet' here
-    UniverSheetsCorePreset({ container: 'sheet' }),
-  ],
+  presets: [UniverSheetsCorePreset({ container: 'sheet' })],
 });
 
 /* ------------------------------------------------------------------ */
@@ -74,18 +71,15 @@ const LYRICS = [
 ;(univerAPI.getFormula() as any).registerFunction(
   'SMOLLM',
   (promptArg: any, rangeArg?: any) => {
-    // Flatten prompt
     const prompt =
       Array.isArray(promptArg) && Array.isArray(promptArg[0])
         ? promptArg[0][0]
         : promptArg;
-    // Flatten range into a string
     let context = '';
     if (rangeArg) {
       const rows = Array.isArray(rangeArg) ? rangeArg : [[rangeArg]];
       context = rows.flat().join(' ');
     }
-    // Remember by cell position
     const sheet = (univerAPI as any)
       .getWorkBook()
       .getActiveSheetInstance();
@@ -109,16 +103,14 @@ const LYRICS = [
 );
 
 /* ------------------------------------------------------------------ */
-/* 4.  Grab the LLM‐controls container (#llm) and wire up buttons      */
+/* 4.  Grab your pre-existing buttons and status bar in #llm          */
 /* ------------------------------------------------------------------ */
-const llmContainer = document.getElementById('llm')!;
-
-const loadBtn = document.getElementById('loadBtn') as HTMLButtonElement;
-const genBtn  = document.getElementById('genBtn')  as HTMLButtonElement;
+const loadBtn   = document.getElementById('loadBtn')   as HTMLButtonElement;
+const genBtn    = document.getElementById('genBtn')    as HTMLButtonElement;
 const statusBar = document.getElementById('statusBar')!;
 
 /* ------------------------------------------------------------------ */
-/* 5.  Start the WebGPU worker (same as React)                        */
+/* 5.  Spin up the WebGPU worker.js                                   */
 /* ------------------------------------------------------------------ */
 const worker = new Worker(new URL('./worker.js', import.meta.url), {
   type: 'module',
@@ -159,15 +151,13 @@ worker.addEventListener('message', (evt) => {
       statusBar.textContent = 'Generating…';
       break;
     case 'update':
-      {
-        const { output } = msg;
-        const sheet = (univerAPI as any)
-          .getWorkBook()
-          .getActiveSheetInstance();
-        const { row, column } = sheet.getActiveCellPosition();
-        const prev = sheet.getRange(row, column).getValue() as string;
-        sheet.getRange(row, column).setValue(prev + output);
-      }
+      const { output } = msg;
+      const sheet = (univerAPI as any)
+        .getWorkBook()
+        .getActiveSheetInstance();
+      const { row, column } = sheet.getActiveCellPosition();
+      const prev = sheet.getRange(row, column).getValue() as string;
+      sheet.getRange(row, column).setValue(prev + output);
       break;
     case 'complete':
       statusBar.textContent = '✅ Generation complete';
@@ -176,7 +166,7 @@ worker.addEventListener('message', (evt) => {
 });
 
 /* ------------------------------------------------------------------ */
-/* 6.  Button event‐handlers                                          */
+/* 6.  Button handlers                                                 */
 /* ------------------------------------------------------------------ */
 loadBtn.addEventListener('click', () => {
   loadBtn.disabled = true;
@@ -189,8 +179,7 @@ genBtn.addEventListener('click', () => {
     .getWorkBook()
     .getActiveSheetInstance();
   const { row, column } = sheet.getActiveCellPosition();
-  const key = `${row},${column}`;
-  const entry = (window as any).__smolPromptMap[key];
+  const entry = (window as any).__smolPromptMap[`${row},${column}`];
   if (!entry) {
     alert('No SMOLLM() prompt queued here – enter =SMOLLM("your prompt") first.');
     return;
@@ -201,7 +190,8 @@ genBtn.addEventListener('click', () => {
     data: [
       {
         role: 'user',
-        content: entry.prompt + (entry.context ? `\nContext: ${entry.context}` : ''),
+        content:
+          entry.prompt + (entry.context ? `\nContext: ${entry.context}` : ''),
       },
     ],
   });
