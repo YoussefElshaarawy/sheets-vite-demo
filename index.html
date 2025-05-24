@@ -2,11 +2,38 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + TS</title>
+    <title>SmolLM WebGPU</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        margin: 2rem;
+        background: #fdfdfd;
+      }
+      textarea {
+        width: 100%;
+        height: 80px;
+        font-size: 1rem;
+        margin-bottom: 1rem;
+      }
+      #response {
+        white-space: pre-wrap;
+        padding: 1rem;
+        background: #f3f3f3;
+        border: 1px solid #ddd;
+        min-height: 100px;
+      }
+    </style>
   </head>
   <body>
-    <div id="univer"></div>
+    <h1>💬 SmolLM2 WebGPU Chat</h1>
+    <button id="load">🔄 Load Model</button>
+    <span id="status">Model not loaded</span>
+    <br /><br />
+    <textarea id="prompt" placeholder="Ask me anything..."></textarea>
+    <button id="generate" disabled>🚀 Generate</button>
+    <h2>🧠 Response:</h2>
+    <div id="response"></div>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
