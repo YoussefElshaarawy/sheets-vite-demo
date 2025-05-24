@@ -11,9 +11,7 @@ import zhCN from '@univerjs/presets/preset-sheets-core/locales/zh-CN';
 import './style.css';
 import '@univerjs/presets/lib/styles/preset-sheets-core.css';
 
-/* ------------------------------------------------------------------ */
-/* 1.  Bootstrap Univer into the LEFT pane (#sheet)                   */
-/* ------------------------------------------------------------------ */
+// 1. Bootstrap Univer into #sheet
 const { univerAPI } = createUniver({
   locale: LocaleType.EN_US,
   locales: { enUS: merge({}, enUS), zhCN: merge({}, zhCN) },
@@ -21,18 +19,14 @@ const { univerAPI } = createUniver({
   presets: [UniverSheetsCorePreset({ container: 'sheet' })],
 });
 
-/* ------------------------------------------------------------------ */
-/* 2.  Create a 100×100 sheet                                         */
-/* ------------------------------------------------------------------ */
+// 2. Create sheet
 ;(univerAPI as any).createUniverSheet({
   name: 'Hello Univer',
   rowCount: 100,
   columnCount: 100,
 });
 
-/* ------------------------------------------------------------------ */
-/* 3.  Register TAYLORSWIFT()                                         */
-/* ------------------------------------------------------------------ */
+// 3a. TAYLORSWIFT()
 const LYRICS = [
   "Cause darling I'm a nightmare dressed like a daydream",
   "We're happy, free, confused and lonely at the same time",
@@ -64,9 +58,7 @@ const LYRICS = [
   }
 );
 
-/* ------------------------------------------------------------------ */
-/* 3b. Register SMOLLM() stub — queues your prompt + optional context */
-/* ------------------------------------------------------------------ */
+// 3b. SMOLLM() stub
 ;(window as any).__smolPromptMap = {};
 ;(univerAPI.getFormula() as any).registerFunction(
   'SMOLLM',
@@ -102,21 +94,16 @@ const LYRICS = [
   }
 );
 
-/* ------------------------------------------------------------------ */
-/* 4.  Grab your pre-existing buttons and status bar in #llm          */
-/* ------------------------------------------------------------------ */
+// 4. Hook up the buttons
 const loadBtn   = document.getElementById('loadBtn')   as HTMLButtonElement;
 const genBtn    = document.getElementById('genBtn')    as HTMLButtonElement;
 const statusBar = document.getElementById('statusBar')!;
 
-/* ------------------------------------------------------------------ */
-/* 5.  Spin up the WebGPU worker.js                                   */
-/* ------------------------------------------------------------------ */
+// 5. Spin up the WebGPU worker
 const worker = new Worker(new URL('./worker.js', import.meta.url), {
   type: 'module',
 });
 worker.postMessage({ type: 'check' });
-
 worker.addEventListener('message', (evt) => {
   const msg = evt.data as any;
   switch (msg.status) {
@@ -127,10 +114,7 @@ worker.addEventListener('message', (evt) => {
       statusBar.textContent = `Loading ${msg.file}: 0%`;
       break;
     case 'progress':
-      statusBar.textContent = `Loading ${msg.file}: ${(
-        (msg.progress / msg.total) *
-        100
-      ).toFixed(1)}%`;
+      statusBar.textContent = `Loading ${msg.file}: ${((msg.progress / msg.total) * 100).toFixed(1)}%`;
       break;
     case 'done':
       statusBar.textContent = `Loaded ${msg.file}`;
@@ -165,15 +149,12 @@ worker.addEventListener('message', (evt) => {
   }
 });
 
-/* ------------------------------------------------------------------ */
-/* 6.  Button handlers                                                 */
-/* ------------------------------------------------------------------ */
+// 6. Button handlers
 loadBtn.addEventListener('click', () => {
   loadBtn.disabled = true;
   loadBtn.style.opacity = '0.5';
   worker.postMessage({ type: 'load' });
 });
-
 genBtn.addEventListener('click', () => {
   const sheet = (univerAPI as any)
     .getWorkBook()
@@ -190,8 +171,7 @@ genBtn.addEventListener('click', () => {
     data: [
       {
         role: 'user',
-        content:
-          entry.prompt + (entry.context ? `\nContext: ${entry.context}` : ''),
+        content: entry.prompt + (entry.context ? `\nContext: ${entry.context}` : ''),
       },
     ],
   });
