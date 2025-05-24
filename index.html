@@ -2,58 +2,29 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vite + TS with LLM</title>
     <style>
-      /* full-screen flex split: sheet = 3fr, controls = 1fr */
-      html,
-      body {
-        margin: 0;
-        padding: 0;
-        height: 100%;
-      }
-      #app-container {
-        display: flex;
-        height: 100vh;
-        width: 100vw;
-      }
-      #univer {
-        flex: 3;
-        overflow: auto;
-      }
-      #controls {
-        flex: 1;
-        box-sizing: border-box;
-        padding: 16px;
-        background: #f7f7f7;
-        border-left: 2px solid #ddd;
-      }
-      /* make buttons stack nicely */
-      #controls button {
-        display: block;
-        width: 100%;
-        margin-bottom: 12px;
-        font-size: 1rem;
-      }
-      #controls .status {
-        margin-top: 8px;
-        padding: 8px;
-        background: rgba(0, 0, 0, 0.7);
-        color: white;
-        border-radius: 4px;
-      }
+      html, body { margin: 0; padding: 0; height: 100%; }
+      #app-container { display: flex; height: 100vh; }
+      /* left ¾ sheet, right ¼ controls */
+      #sheet   { flex: 3; overflow: auto; }
+      #controls{ flex: 1; padding: 16px; background: #f7f7f7; box-sizing: border-box; border-left:1px solid #ddd; }
+      #controls button { display: block; width: 100%; margin-bottom: 12px; font-size: 1rem; }
+      #statusBar { padding: 8px; background: rgba(0,0,0,0.7); color: white; border-radius: 4px; }
     </style>
   </head>
   <body>
     <div id="app-container">
-      <!-- 75% width sheet -->
-      <div id="univer"></div>
+      <!-- matches createUniver({ container: 'sheet' }) -->
+      <div id="sheet"></div>
 
-      <!-- 25% width controls panel -->
-      <div id="controls"></div>
+      <div id="controls">
+        <!-- main.ts will hook these by ID -->
+        <button id="loadBtn">Load LLM Model</button>
+        <button id="genBtn" disabled style="opacity:0.5">Generate LLM</button>
+        <div id="statusBar">Model not loaded</div>
+      </div>
     </div>
 
     <script type="module" src="/src/main.ts"></script>
