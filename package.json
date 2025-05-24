@@ -9,7 +9,7 @@
     "serve": "serve -s dist"
   },
   "dependencies": {
-    "@univerjs/presets":     "^1.0.0",
+    "@univerjs/presets":     "^0.5.5"",
     "@xenova/transformers":  "^1.0.0",
     "uuid":                  "^9.0.0"
   },
