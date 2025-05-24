@@ -11,9 +11,9 @@ import zhCN from '@univerjs/presets/preset-sheets-core/locales/zh-CN';
 import './style.css';
 import '@univerjs/presets/lib/styles/preset-sheets-core.css';
 
-// ------------------------------------------------------------------
-// 1. Bootstrap Univer and mount inside <div id="univer">
-// ------------------------------------------------------------------
+/* ------------------------------------------------------------------ */
+/* 1.  Boot-strap Univer and mount inside <div id="univer">            */
+/* ------------------------------------------------------------------ */
 const { univerAPI } = createUniver({
   locale: LocaleType.EN_US,
   locales: { enUS: merge({}, enUS), zhCN: merge({}, zhCN) },
@@ -21,18 +21,18 @@ const { univerAPI } = createUniver({
   presets: [UniverSheetsCorePreset({ container: 'univer' })],
 });
 
-// ------------------------------------------------------------------
-// 2. Create a visible 100×100 sheet
-// ------------------------------------------------------------------
-;(univerAPI as any).createUniverSheet({
+/* ------------------------------------------------------------------ */
+/* 2.  Create a visible 100 × 100 sheet                                */
+/* ------------------------------------------------------------------ */
+(univerAPI as any).createUniverSheet({
   name: 'Hello Univer',
   rowCount: 100,
   columnCount: 100,
 });
 
-// ------------------------------------------------------------------
-// 3. Register the TAYLORSWIFT() custom formula
-// ------------------------------------------------------------------
+/* ------------------------------------------------------------------ */
+/* 3.  Register TAYLORSWIFT()                                          */
+/* ------------------------------------------------------------------ */
 const LYRICS = [
   "Cause darling I'm a nightmare dressed like a daydream",
   "We're happy, free, confused and lonely at the same time",
@@ -41,7 +41,7 @@ const LYRICS = [
   "Loving him was red—burning red",
 ];
 
-;(univerAPI.getFormula() as any).registerFunction(
+(univerAPI.getFormula() as any).registerFunction(
   'TAYLORSWIFT',
   (...args: any[]) => {
     const value = Array.isArray(args[0]) ? args[0][0] : args[0];
@@ -65,9 +65,54 @@ const LYRICS = [
   }
 );
 
-// ------------------------------------------------------------------
-// 4. Inject “Load LLM Model” & “Generate LLM” buttons + status bar
-// ------------------------------------------------------------------
+/* ------------------------------------------------------------------ */
+/* 3b. Register SMOLLM() stub — queues your prompt (and optional range)*/
+/* ------------------------------------------------------------------ */
+;(window as any).__smolPromptMap = {};
+(univerAPI.getFormula() as any).registerFunction(
+  'SMOLLM',
+  (promptArg: any, rangeArg?: any) => {
+    // Flatten prompt
+    const prompt =
+      Array.isArray(promptArg) && Array.isArray(promptArg[0])
+        ? promptArg[0][0]
+        : promptArg;
+    // Flatten optional range to a single string for “context”
+    let context = '';
+    if (rangeArg) {
+      const rows = Array.isArray(rangeArg) ? rangeArg : [[rangeArg]];
+      context = rows.flat().join(' ');
+    }
+    // Store it by cell position
+    const sheet = (univerAPI as any)
+      .getWorkBook()
+      .getActiveSheetInstance();
+    const { row, column } = sheet.getActiveCellPosition();
+    (window as any).__smolPromptMap[`${row},${column}`] = { prompt, context };
+    // Return a placeholder – you must click “Generate LLM” next
+    return '⏳ Prompt queued – click Generate LLM';
+  },
+  {
+    description: 'customFunction.SMOLLM.description',
+    locales: {
+      enUS: {
+        customFunction: {
+          SMOLLM: {
+            description:
+              'Queues a prompt (and optional context range) for SmolLM; then click the Generate LLM button to run.',
+          },
+        },
+      },
+    },
+  }
+);
+
+/* ------------------------------------------------------------------ */
+/* 4. Inject Load/Generate buttons + status into the Univer container */
+/* ------------------------------------------------------------------ */
+const container = document.getElementById('univer')!;
+container.style.position = 'relative';
+
 const loadBtn = document.createElement('button');
 loadBtn.textContent = 'Load LLM Model';
 Object.assign(loadBtn.style, {
@@ -80,8 +125,9 @@ Object.assign(loadBtn.style, {
   border: 'none',
   borderRadius: '4px',
   cursor: 'pointer',
+  zIndex: '10000',
 });
-document.body.appendChild(loadBtn);
+container.appendChild(loadBtn);
 
 const genBtn = document.createElement('button');
 genBtn.textContent = 'Generate LLM';
@@ -96,9 +142,10 @@ Object.assign(genBtn.style, {
   borderRadius: '4px',
   cursor: 'pointer',
   opacity: '0.5',
+  zIndex: '10000',
 });
 genBtn.disabled = true;
-document.body.appendChild(genBtn);
+container.appendChild(genBtn);
 
 const statusBar = document.createElement('div');
 statusBar.textContent = 'Model not loaded';
@@ -110,18 +157,18 @@ Object.assign(statusBar.style, {
   background: 'rgba(0,0,0,0.7)',
   color: 'white',
   borderRadius: '4px',
+  zIndex: '10000',
 });
-document.body.appendChild(statusBar);
+container.appendChild(statusBar);
 
-// ------------------------------------------------------------------
-// 5. Bootstrap the same worker.js for WebGPU LLM
-// ------------------------------------------------------------------
+/* ------------------------------------------------------------------ */
+/* 5. Spin up the same WebGPU worker.js you had in React             */
+/* ------------------------------------------------------------------ */
 const worker = new Worker(new URL('./worker.js', import.meta.url), {
   type: 'module',
 });
-worker.postMessage({ type: 'check' }); // feature-detect WebGPU
+worker.postMessage({ type: 'check' });
 
-// Mirror worker messages into our UI
 worker.addEventListener('message', (evt) => {
   const msg = evt.data as any;
   switch (msg.status) {
@@ -132,9 +179,7 @@ worker.addEventListener('message', (evt) => {
       statusBar.textContent = `Loading ${msg.file}: 0%`;
       break;
     case 'progress':
-      statusBar.textContent = `Loading ${msg.file}: ${((
-        msg.progress / msg.total
-      ) * 100).toFixed(1)}%`;
+      statusBar.textContent = `Loading ${msg.file}: ${((msg.progress / msg.total) * 100).toFixed(1)}%`;
       break;
     case 'done':
       statusBar.textContent = `Loaded ${msg.file}`;
@@ -154,46 +199,47 @@ worker.addEventListener('message', (evt) => {
     case 'start':
       statusBar.textContent = 'Generating…';
       break;
-    case 'update': {
-      // Stream token-by-token into the active cell
-      const { output } = msg;
-      const sheet = (univerAPI as any)
-        .getWorkBook()
-        .getActiveSheetInstance();
-      const { row, column } = sheet.getActiveCellPosition();
-      const prev = (sheet.getRange(row, column).getValue() as string) || '';
-      sheet.getRange(row, column).setValue(prev + output);
+    case 'update':
+      {
+        // Stream token by token back into the active cell
+        const { output } = msg;
+        const sheet = (univerAPI as any)
+          .getWorkBook()
+          .getActiveSheetInstance();
+        const { row, column } = sheet.getActiveCellPosition();
+        const prev = sheet.getRange(row, column).getValue() as string;
+        sheet.getRange(row, column).setValue(prev + output);
+      }
       break;
-    }
     case 'complete':
       statusBar.textContent = '✅ Generation complete';
       break;
   }
 });
 
-// Wire up the “Load LLM Model” button
+// Load button
 loadBtn.addEventListener('click', () => {
   loadBtn.disabled = true;
   loadBtn.style.opacity = '0.5';
   worker.postMessage({ type: 'load' });
 });
 
-// Wire up the “Generate LLM” button
+// Generate button
 genBtn.addEventListener('click', () => {
   const sheet = (univerAPI as any)
     .getWorkBook()
     .getActiveSheetInstance();
   const { row, column } = sheet.getActiveCellPosition();
-  const prompt = sheet.getRange(row, column).getValue() as string;
-
-  if (!prompt || prompt.trim().length === 0) {
-    alert('Please enter a prompt into the selected cell first.');
+  const key = `${row},${column}`;
+  const entry = (window as any).__smolPromptMap[key];
+  if (!entry) {
+    alert('No SMOLLM() prompt queued here – enter =SMOLLM("your prompt") first.');
     return;
   }
-
+  // Clear and start streaming
   sheet.getRange(row, column).setValue('');
   worker.postMessage({
     type: 'generate',
-    data: [{ role: 'user', content: prompt }],
+    data: [{ role: 'user', content: entry.prompt + (entry.context ? `\nContext: ${entry.context}` : '') }],
   });
 });
