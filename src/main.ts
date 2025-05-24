@@ -1,66 +1,102 @@
-import {
-  createUniver,
-  defaultTheme,
-  LocaleType,
-  merge,
-} from '@univerjs/presets';
-import { UniverSheetsCorePreset } from '@univerjs/presets/preset-sheets-core';
-import enUS from '@univerjs/presets/preset-sheets-core/locales/en-US';
-import zhCN from '@univerjs/presets/preset-sheets-core/locales/zh-CN';
-
+// main.ts
 import './style.css';
-import '@univerjs/presets/lib/styles/preset-sheets-core.css';
 
-/* ------------------------------------------------------------------ */
-/* 1.  Boot‑strap Univer and mount inside <div id="univer">            */
-/* ------------------------------------------------------------------ */
-const { univerAPI } = createUniver({
-  locale: LocaleType.EN_US,
-  locales: { enUS: merge({}, enUS), zhCN: merge({}, zhCN) },
-  theme: defaultTheme,
-  presets: [UniverSheetsCorePreset({ container: 'univer' })],
+const container = document.createElement('div');
+container.style.cssText = `
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  font-family: sans-serif;
+`;
+document.body.appendChild(container);
+
+const loadBtn = document.createElement('button');
+loadBtn.textContent = 'Load SmolLM2 Model';
+loadBtn.style.padding = '12px';
+loadBtn.style.marginBottom = '16px';
+container.appendChild(loadBtn);
+
+const progressBar = document.createElement('div');
+progressBar.style.height = '24px';
+progressBar.style.width = '300px';
+progressBar.style.background = '#eee';
+progressBar.style.borderRadius = '4px';
+progressBar.style.overflow = 'hidden';
+const fill = document.createElement('div');
+fill.style.height = '100%';
+fill.style.width = '0%';
+fill.style.background = '#4caf50';
+progressBar.appendChild(fill);
+container.appendChild(progressBar);
+
+const input = document.createElement('textarea');
+input.rows = 4;
+input.cols = 50;
+input.placeholder = 'Enter your prompt here...';
+input.style.marginTop = '24px';
+container.appendChild(input);
+
+const genBtn = document.createElement('button');
+genBtn.textContent = 'Generate';
+genBtn.disabled = true;
+genBtn.style.marginTop = '12px';
+genBtn.style.padding = '12px';
+container.appendChild(genBtn);
+
+const output = document.createElement('pre');
+output.style.marginTop = '16px';
+output.style.maxWidth = '80%';
+output.style.whiteSpace = 'pre-wrap';
+container.appendChild(output);
+
+const worker = new Worker(new URL('./worker.js', import.meta.url), {
+  type: 'module',
 });
 
-/* ------------------------------------------------------------------ */
-/* 2.  Create a visible 100 × 100 sheet (cast → any silences TS)       */
-/* ------------------------------------------------------------------ */
-(univerAPI as any).createUniverSheet({
-  name: 'Hello Univer',
-  rowCount: 100,
-  columnCount: 100,
-});
-
-/* ------------------------------------------------------------------ */
-/* 3.  Register the TAYLORSWIFT() custom formula                      */
-/* ------------------------------------------------------------------ */
-const LYRICS = [
-  "Cause darling I'm a nightmare dressed like a daydream",
-  "We're happy, free, confused and lonely at the same time",
-  "You call me up again just to break me like a promise",
-  "I remember it all too well",
-  "Loving him was red—burning red",
-];
-
-(univerAPI.getFormula() as any).registerFunction(
-  'TAYLORSWIFT',
-  (...args: any[]) => {
-    const value = Array.isArray(args[0]) ? args[0][0] : args[0];
-    const idx   = Number(value);
-    return idx >= 1 && idx <= LYRICS.length
-      ? LYRICS[idx - 1]
-      : LYRICS[Math.floor(Math.random() * LYRICS.length)];
-  },
-  {
-    description: 'customFunction.TAYLORSWIFT.description',
-    locales: {
-      enUS: {
-        customFunction: {
-          TAYLORSWIFT: {
-            description:
-              'Returns a Taylor Swift lyric (optional 1‑5 chooses a specific line).',
-          },
-        },
-      },
-    },
+worker.addEventListener('message', (e) => {
+  const msg = e.data;
+  switch (msg.status) {
+    case 'loading':
+      output.textContent = msg.data;
+      break;
+    case 'initiate':
+      fill.style.width = '0%';
+      break;
+    case 'progress':
+      fill.style.width = `${(msg.progress / msg.total) * 100}%`;
+      break;
+    case 'done':
+      fill.style.width = '100%';
+      break;
+    case 'ready':
+      output.textContent = 'Model ready ✅';
+      genBtn.disabled = false;
+      break;
+    case 'start':
+      output.textContent = '';
+      break;
+    case 'update':
+      output.textContent += msg.output;
+      break;
+    case 'complete':
+      output.textContent += '\n✅ Complete';
+      break;
+    case 'error':
+      output.textContent = `❌ Error: ${msg.data}`;
+      break;
   }
-);
+});
+
+loadBtn.onclick = () => {
+  worker.postMessage({ type: 'load' });
+  loadBtn.disabled = true;
+};
+
+genBtn.onclick = () => {
+  worker.postMessage({
+    type: 'generate',
+    data: [{ role: 'user', content: input.value }],
+  });
+};
