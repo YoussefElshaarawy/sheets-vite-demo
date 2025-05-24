@@ -3,10 +3,53 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + TS</title>
+    <title>Vite + TS with LLM</title>
+    <style>
+      /* full-screen flex split: sheet = 3fr, controls = 1fr */
+      #app-container {
+        display: flex;
+        height: 100vh;
+        margin: 0;
+        padding: 0;
+      }
+      #univer {
+        flex: 3;
+        overflow: auto;
+      }
+      #controls {
+        flex: 1;
+        box-sizing: border-box;
+        padding: 16px;
+        background: #f7f7f7;
+        border-left: 2px solid #ddd;
+      }
+      /* make buttons stack nicely */
+      #controls button {
+        display: block;
+        width: 100%;
+        margin-bottom: 12px;
+        font-size: 1rem;
+      }
+      #controls div.status {
+        margin-top: 8px;
+        padding: 8px;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        border-radius: 4px;
+      }
+    </style>
   </head>
   <body>
-    <div id="univer"></div>
+    <div id="app-container">
+      <!-- 75% width sheet -->
+      <div id="univer"></div>
+
+      <!-- 25% width controls panel -->
+      <div id="controls">
+        <!-- main.ts will append here -->
+      </div>
+    </div>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
