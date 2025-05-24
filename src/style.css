@@ -1,15 +1,55 @@
-html,
-body {
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  /* your existing “scrollbar-thin” rules */
+  .scrollbar-thin::-webkit-scrollbar {
+    @apply w-2;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    @apply rounded-full bg-gray-100 dark:bg-gray-700;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-gray-300 dark:bg-gray-600;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-500;
+  }
+
+  .animation-delay-200 { animation-delay: 200ms; }
+  .animation-delay-400 { animation-delay: 400ms; }
+  .overflow-wrap-anywhere { overflow-wrap: anywhere; }
+}
+
+/* Full–height reset */
+html, body {
   margin: 0;
   padding: 0;
   height: 100%;
 }
 
-#univer {
-  /* give the room both height *and* width */
-  height: 100%;
-  width: 100%;        /* ← add this line */
-  
-  /* allow scrolling so you can move around the grid */
-  overflow: auto;     /* ← change hidden → auto */
+/* 3/4–1/4 flex layout */
+#app-container {
+  display: flex;
+  height: 100vh;
+}
+#sheet {
+  flex: 3;
+  /* if you still want custom scrollbars on the sheet */
+  overflow: auto;
+}
+#llm {
+  flex: 1;
+  position: relative;
+  padding: 16px;
+  box-sizing: border-box;
+  background: #f9fafb;
+  border-left: 1px solid #e5e7eb;
+}
+
+/* Optional: button resets so they inherit full-width and spacing */
+#llm button {
+  width: 100%;
+  margin-bottom: 8px;
 }
