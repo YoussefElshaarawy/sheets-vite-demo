@@ -2,15 +2,23 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
     <title>Vite + TS with LLM</title>
     <style>
       /* full-screen flex split: sheet = 3fr, controls = 1fr */
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+      }
       #app-container {
         display: flex;
         height: 100vh;
-        margin: 0;
-        padding: 0;
+        width: 100vw;
       }
       #univer {
         flex: 3;
@@ -30,7 +38,7 @@
         margin-bottom: 12px;
         font-size: 1rem;
       }
-      #controls div.status {
+      #controls .status {
         margin-top: 8px;
         padding: 8px;
         background: rgba(0, 0, 0, 0.7);
@@ -45,9 +53,7 @@
       <div id="univer"></div>
 
       <!-- 25% width controls panel -->
-      <div id="controls">
-        <!-- main.ts will append here -->
-      </div>
+      <div id="controls"></div>
     </div>
 
     <script type="module" src="/src/main.ts"></script>
