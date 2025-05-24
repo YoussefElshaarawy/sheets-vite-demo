@@ -2,37 +2,49 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SmolLM WebGPU</title>
     <style>
       body {
         font-family: sans-serif;
-        margin: 2rem;
-        background: #fdfdfd;
+        margin: 0;
+        padding: 0;
+        background: #f4f4f4;
+      }
+      #app {
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 1rem;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       }
       textarea {
         width: 100%;
-        height: 80px;
+        padding: 8px;
+        margin-bottom: 8px;
         font-size: 1rem;
-        margin-bottom: 1rem;
       }
-      #response {
-        white-space: pre-wrap;
-        padding: 1rem;
-        background: #f3f3f3;
-        border: 1px solid #ddd;
-        min-height: 100px;
+      button {
+        padding: 8px 16px;
+        font-size: 1rem;
+        cursor: pointer;
+      }
+      .status {
+        margin-top: 12px;
+        font-size: 0.9rem;
+        color: #333;
       }
     </style>
   </head>
   <body>
-    <h1>💬 SmolLM2 WebGPU Chat</h1>
-    <button id="load">🔄 Load Model</button>
-    <span id="status">Model not loaded</span>
-    <br /><br />
-    <textarea id="prompt" placeholder="Ask me anything..."></textarea>
-    <button id="generate" disabled>🚀 Generate</button>
-    <h2>🧠 Response:</h2>
-    <div id="response"></div>
+    <div id="app">
+      <button id="loadBtn">Load LLM Model</button>
+      <div class="status" id="status">Model not loaded</div>
+      <textarea id="prompt" placeholder="Type a prompt..." rows="4"></textarea>
+      <button id="generateBtn" disabled>Generate</button>
+      <pre id="output"></pre>
+    </div>
 
     <script type="module" src="/src/main.ts"></script>
   </body>
